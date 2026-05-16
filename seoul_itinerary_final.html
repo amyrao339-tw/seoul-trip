@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>首爾六日五夜完整行程表</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; background: #f8f6f2; color: #2c2c2a; line-height: 1.6; }
+  
+  .header { background: #1a3a2a; color: #fff; padding: 2rem 2rem 1.5rem; }
+  .header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .header .subtitle { font-size: 0.9rem; opacity: 0.75; }
+  .header .meta { display: flex; gap: 1.5rem; margin-top: 1rem; flex-wrap: wrap; }
+  .header .meta span { font-size: 0.82rem; background: rgba(255,255,255,0.12); padding: 4px 12px; border-radius: 20px; }
+
+  .day-tabs { display: flex; overflow-x: auto; background: #fff; border-bottom: 1px solid #e0ddd6; padding: 0 1rem; gap: 0; }
+  .tab { flex-shrink: 0; padding: 0.75rem 1.2rem; font-size: 0.85rem; font-weight: 600; color: #888; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
+  .tab:hover { color: #1a3a2a; }
+  .tab.active { color: #1a3a2a; border-bottom-color: #2d7a4f; }
+
+  .day-panel { display: none; padding: 1.5rem 1.5rem 2rem; }
+  .day-panel.active { display: block; }
+
+  .day-header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e8e5de; }
+  .day-badge { background: #1a3a2a; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; white-space: nowrap; margin-top: 2px; }
+  .day-theme { font-size: 1.1rem; font-weight: 700; color: #1a3a2a; }
+  .day-note { font-size: 0.82rem; color: #666; margin-top: 2px; }
+
+  .meal-strip { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .meal-tag { font-size: 0.78rem; padding: 4px 12px; border-radius: 20px; font-weight: 600; }
+  .meal-tag.breakfast { background: #fff8e6; color: #8a5f00; border: 1px solid #f0d080; }
+  .meal-tag.lunch { background: #e8f4ee; color: #1a5c35; border: 1px solid #a8d8ba; }
+  .meal-tag.dinner { background: #faeaea; color: #8a2020; border: 1px solid #e8b0b0; }
+
+  .timeline { position: relative; }
+  .timeline::before { content: ''; position: absolute; left: 52px; top: 0; bottom: 0; width: 1px; background: #ddd8ce; }
+
+  .item { display: grid; grid-template-columns: 52px 1fr; gap: 0; margin-bottom: 0; position: relative; }
+  .item-time { font-size: 0.75rem; font-weight: 700; color: #888; padding: 1rem 12px 1rem 0; text-align: right; line-height: 1.2; padding-top: 18px; }
+  .item-body { border-left: none; padding: 0.9rem 0 0.9rem 1.2rem; position: relative; }
+  .item-body::before { content: ''; position: absolute; left: -5px; top: 22px; width: 9px; height: 9px; border-radius: 50%; background: #2d7a4f; border: 2px solid #fff; }
+
+  .item-type { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #aaa; margin-bottom: 2px; }
+  .item-title { font-size: 0.95rem; font-weight: 700; color: #1a3a2a; margin-bottom: 3px; }
+  .item-transport { font-size: 0.78rem; color: #2d7a4f; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+  .item-desc { font-size: 0.82rem; color: #555; line-height: 1.55; }
+  .item-note { font-size: 0.78rem; color: #c07000; background: #fff8e6; border-left: 3px solid #f0c040; padding: 4px 8px; margin-top: 6px; border-radius: 0 4px 4px 0; }
+  .item-pending { font-size: 0.78rem; color: #888; background: #f4f3f0; border-left: 3px solid #ccc; padding: 4px 8px; margin-top: 6px; border-radius: 0 4px 4px 0; }
+
+  .item.meal .item-body::before { background: #d4a020; }
+  .item.transport-only .item-body::before { background: #4a90c8; }
+  .item.checkin .item-body::before { background: #888; }
+  .item.shopping .item-body::before { background: #b85a8a; }
+  .item.free .item-body::before { background: #aaa; }
+
+  .section-label { font-size: 0.72rem; font-weight: 700; color: #999; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.8rem 0 0.4rem 1.2rem; margin-left: 52px; }
+
+  .summary-bar { background: #fff; border: 1px solid #e0ddd6; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .summary-bar .s-item { font-size: 0.8rem; color: #555; }
+  .summary-bar .s-item strong { color: #1a3a2a; }
+
+  .tip-box { background: #e8f4ee; border-left: 3px solid #2d7a4f; border-radius: 0 6px 6px 0; padding: 0.6rem 0.9rem; margin-top: 1.2rem; font-size: 0.82rem; color: #1a4a2a; }
+
+  @media print {
+    .day-tabs { display: none; }
+    .day-panel { display: block !important; page-break-after: always; }
+  }
+
+  @media (max-width: 480px) {
+    .header { padding: 1.2rem; }
+    .day-panel { padding: 1rem; }
+    .timeline::before { left: 44px; }
+    .item { grid-template-columns: 44px 1fr; }
+    .item-time { font-size: 0.7rem; padding-top: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🇰🇷 首爾六日五夜家庭自由行</h1>
+  <div class="subtitle">2026年5月19日（二）— 5月24日（日）</div>
+  <div class="meta">
+    <span>✈ 真航空 LJ736 去程｜德威 TW669 回程</span>
+    <span>🏨 Koreana Hotel 市廳</span>
+    <span>👨‍👩‍👧‍👧 2大2青少年女</span>
+    <span>🚇 地鐵為主</span>
+  </div>
+</div>
+
+<div class="day-tabs">
+  <div class="tab active" onclick="showDay(0)">Day 1｜5/19</div>
+  <div class="tab" onclick="showDay(1)">Day 2｜5/20</div>
+  <div class="tab" onclick="showDay(2)">Day 3｜5/21</div>
+  <div class="tab" onclick="showDay(3)">Day 4｜5/22</div>
+  <div class="tab" onclick="showDay(4)">Day 5｜5/23</div>
+  <div class="tab" onclick="showDay(5)">Day 6｜5/24</div>
+</div>
+
+<!-- DAY 1 -->
+<div class="day-panel active" id="day-0">
+  <div class="day-header">
+    <div class="day-badge">Day 1｜5/19 二</div>
+    <div>
+      <div class="day-theme">✈ 抵達首爾＋明洞初探</div>
+      <div class="day-note">輕鬆熱身，不貪多，感受首爾第一夜氛圍</div>
+    </div>
+  </div>
+  <div class="meal-strip">
+    <span class="meal-tag breakfast">早餐｜無（飛機上）</span>
+    <span class="meal-tag lunch">午餐｜無</span>
+    <span class="meal-tag dinner">晚餐｜明洞夜市小吃或餐廳三選一</span>
+  </div>
+  <div class="timeline">
+    <div class="item transport-only">
+      <div class="item-time">10:40</div>
+      <div class="item-body">
+        <div class="item-type">出發</div>
+        <div class="item-title">台中 RMQ 起飛</div>
+        <div class="item-transport">✈ 真航空 LJ736</div>
+        <div class="item-desc">建議提前確認行李重量限制及登機手續。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">14:15</div>
+      <div class="item-body">
+        <div class="item-type">抵達</div>
+        <div class="item-title">仁川機場 T1 入境</div>
+        <div class="item-transport">— 步行：入境大廳</div>
+        <div class="item-desc">入境審查 → 提領行李 → 購買 T-money 交通卡（入境大廳便利商店，約 KRW 5,000 含初始儲值）。</div>
+        <div class="item-note">⚠ 購買 T-money 後立即儲值 KRW 50,000 以上，之後地鐵、公車全刷它。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">15:00</div>
+      <div class="item-body">
+        <div class="item-type">交通</div>
+        <div class="item-title">搭 6701 K-Limousine 巴士</div>
+        <div class="item-transport">🚌 KRW 18,000/人｜約 80 分鐘</div>
+        <div class="item-desc">T1 一樓 4A 或 3B 月台候車。直達 Koreana Hotel 門口停靠。有行李拖拉選巴士最舒適，不用爬地鐵樓梯。車上刷 T-money 或現場購票皆可。</div>
+        <div class="item-note">⚠ 確認上車前告知司機目的地「City Hall / Koreana Hotel」，到站前有廣播，需自行按下車鈴。</div>
+      </div>
+    </div>
+    <div class="item checkin">
+      <div class="item-time">16:30</div>
+      <div class="item-body">
+        <div class="item-type">入住</div>
+        <div class="item-title">Koreana Hotel Check-in</div>
+        <div class="item-transport">— 巴士直達門口</div>
+        <div class="item-desc">放行李、梳洗換裝。飯店位於世宗大路，步行可到光化門、明洞、德壽宮。確認房間設施，準備出發。</div>
+      </div>
+    </div>
+    <div class="item meal">
+      <div class="item-time">18:00</div>
+      <div class="item-body">
+        <div class="item-type">晚餐（三選一）</div>
+        <div class="item-title">明洞覓食</div>
+        <div class="item-transport">🚶 步行 10 分鐘</div>
+        <div class="item-desc">
+          <strong>選項A｜明洞夜市掃街小吃</strong>：炸雞串、起司土豆、雞蛋糕、辣炒年糕，邊走邊吃最有初抵首爾的感覺，KRW 3,000–8,000/人。<br>
+          <strong>選項B｜이가네갈비 辣排骨鍋</strong>：在地老店，湯頭濃郁，接受度高，份量足夠四人，KRW 15,000–20,000/人。<br>
+          <strong>選項C｜백제삼계탕 百濟蔘雞湯</strong>：1971年開業，整隻雞＋人蔘，清補暖胃，長途飛行後極佳補給，KRW 16,000–20,000/人。
+        </div>
+        <div class="item-note">💡 建議先逛夜市吃小吃，若還不夠飽再找餐廳，避免吃飽後站在攤位前提不起興趣。</div>
+      </div>
+    </div>
+    <div class="item shopping">
+      <div class="item-time">19:30</div>
+      <div class="item-body">
+        <div class="item-type">購物</div>
+        <div class="item-title">Olive Young 明洞旗艦店</div>
+        <div class="item-transport">🚶 步行 3 分鐘（夜市附近）</div>
+        <div class="item-desc">韓國最大美妝藥妝連鎖，明洞旗艦店貨色最齊全。此行以「認識品項」為主，Day 4 再正式掃貨。面膜、精華液、防曬先看好，記下想買的。</div>
+      </div>
+    </div>
+    <div class="item free">
+      <div class="item-time">21:00</div>
+      <div class="item-body">
+        <div class="item-type">返回</div>
+        <div class="item-title">步行返回飯店</div>
+        <div class="item-transport">🚶 步行 10 分鐘</div>
+        <div class="item-desc">早點休息，明天有景福宮白天＋夜間雙場次，體力要充足。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 2 -->
+<div class="day-panel" id="day-1">
+  <div class="day-header">
+    <div class="day-badge">Day 2｜5/20 三</div>
+    <div>
+      <div class="day-theme">🏯 德壽宮＋韓服妝髮＋景福宮＋北村＋仁寺洞＋夜間宮殿</div>
+      <div class="day-note">文化歷史日，白天穿韓服，晚上趁5月限定夜間開放再訪 — 景福宮兩種截然不同的氛圍</div>
+    </div>
+  </div>
+  <div class="meal-strip">
+    <span class="meal-tag breakfast">早餐｜便利商店（飯店旁）</span>
+    <span class="meal-tag lunch">午餐｜三清洞（三選一）</span>
+    <span class="meal-tag dinner">晚餐｜夜間宮殿前輕食</span>
+  </div>
+  <div class="timeline">
+    <div class="item meal">
+      <div class="item-time">08:00</div>
+      <div class="item-body">
+        <div class="item-type">早餐</div>
+        <div class="item-title">GS25 / CU 便利商店</div>
+        <div class="item-transport">🚶 步行 1 分鐘</div>
+        <div class="item-desc">飯糰＋三明治＋美式咖啡，快速解決，今天行程滿，要早出發。韓國便利商店品質遠高於台灣，KRW 3,000–6,000/人。</div>
+        <div class="item-note">💡 或選 Isaac Toast（明洞站附近，步行10分），韓國版美而美，奶油鐵板吐司現煎，需多預留30分鐘。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">08:30</div>
+      <div class="item-body">
+        <div class="item-type">景點</div>
+        <div class="item-title">德壽宮＋石牆路</div>
+        <div class="item-transport">🚶 步行 5 分鐘｜停留約 45 分鐘</div>
+        <div class="item-desc">市廳正對面的朝鮮王朝宮殿，清晨人最少最適合拍照。門票 KRW 1,000/人，超值。石牆路（돌담길）兩側樹木茂盛，5月綠意盎然，是首爾著名散步道，也是韓劇常見取景地。</div>
+        <div class="item-note">💡 清晨光線柔和，是全程拍照效果最好的時段之一，白衣或素色衣服最上鏡。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">09:30</div>
+      <div class="item-body">
+        <div class="item-type">交通</div>
+        <div class="item-title">地鐵前往景福宮</div>
+        <div class="item-transport">🚇 5號線→3號線 景福宮站｜約 15 分鐘</div>
+        <div class="item-desc">市廳站搭5號線，光化門站下，再步行或轉3號線至景福宮站。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">09:50</div>
+      <div class="item-body">
+        <div class="item-type">體驗</div>
+        <div class="item-title">景福宮附近租借韓服＋妝髮</div>
+        <div class="item-transport">🚶 景福宮西門附近步行可達｜約 45–60 分鐘辦好</div>
+        <div class="item-desc">建議預約 Hanboknam（한복남）或 Hanbokrent，提前在 Klook 選好款式和時段。含妝髮套裝 KRW 30,000–50,000/人，店家幫忙盤髮整理，整體感大幅提升。穿韓服可免費進入景福宮。</div>
+        <div class="item-note">⚠ 建議出發前1–2週在Klook預約，指定10:00前後時段，避免現場等候影響行程。四人同時需要安排，預約更重要。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">11:00</div>
+      <div class="item-body">
+        <div class="item-type">景點</div>
+        <div class="item-title">景福宮（白天）</div>
+        <div class="item-transport">🚶 步行入場｜穿韓服免費｜停留約 1.5–2 小時</div>
+        <div class="item-desc">首爾最具代表性的朝鮮王朝宮殿，建於1395年。主要建築包含勤政殿、慶會樓（水上宮殿）、香遠亭等。穿韓服在宮殿取景拍照是本次行程最值得珍藏的回憶之一。</div>
+        <div class="item-note">⚠ 景福宮週二休館 — 5/20是週三，完全沒問題✅</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">13:00</div>
+      <div class="item-body">
+        <div class="item-type">體驗</div>
+        <div class="item-title">歸還韓服 → 北村韓屋村</div>
+        <div class="item-transport">🚶 步行 15 分鐘｜停留約 1 小時</div>
+        <div class="item-desc">景福宮東北方，保存完好的傳統韓屋聚落，蜿蜒巷弄充滿韓劇場景感。以北村八景著稱，最美角度在2號景（계동길）俯瞰屋頂的視角。人多，保持安靜是禮節。</div>
+        <div class="item-note">💡 下午人潮會越來越多，趁早去最好。巷弄裡有住戶居住，請放低音量。</div>
+      </div>
+    </div>
+    <div class="item meal">
+      <div class="item-time">14:00</div>
+      <div class="item-body">
+        <div class="item-type">午餐（三選一）</div>
+        <div class="item-title">三清洞用餐</div>
+        <div class="item-transport">🚶 步行 5–10 分鐘</div>
+        <div class="item-desc">
+          <strong>選項A｜Cafe Onion Anguk</strong>：安國站韓屋咖啡廳，麵包人氣超高，連韓國在地人也愛，輕食午餐＋咖啡，打卡必去，KRW 10,000–15,000/人。<br>
+          <strong>選項B｜수연山房 壽研山房</strong>：三清洞知名韓屋茶館，傳統套餐＋茶＋甜點，環境最雅致，KRW 12,000–18,000/人。<br>
+          <strong>選項C｜三清洞刀切麵巷</strong>：湯頭清淡鮮甜，在地家常味，吃完不會太撐，KRW 9,000–13,000/人。
+        </div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">15:00</div>
+      <div class="item-body">
+        <div class="item-type">景點</div>
+        <div class="item-title">仁寺洞（인사동）</div>
+        <div class="item-transport">🚶 步行 10 分鐘｜停留約 1 小時</div>
+        <div class="item-desc">傳統工藝品、古董、藝廊、特色茶館密集的文化街道。可以買到品質較好的韓國傳統紀念品（不是大量製造的觀光品）。Ssamziegil 廣場是人氣打卡點。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">16:30</div>
+      <div class="item-body">
+        <div class="item-type">返回休息</div>
+        <div class="item-title">返回飯店休息</div>
+        <div class="item-transport">🚇 地鐵約 15 分鐘</div>
+        <div class="item-desc">⚠ 這段休息時間非常關鍵，晚上還有夜間宮殿。下午 4–7 點不安排任何行程，讓大家養精蓄銳。</div>
+      </div>
+    </div>
+    <div class="item meal">
+      <div class="item-time">18:00</div>
+      <div class="item-body">
+        <div class="item-type">晚餐（輕食）</div>
+        <div class="item-title">夜間宮殿前輕食</div>
+        <div class="item-transport">🚶 飯店附近步行</div>
+        <div class="item-desc">
+          <strong>選項A｜德壽宮旁星巴克典藏門市</strong>：首爾首間韓屋建築星巴克，石牆路旁，咖啡＋輕食，邊吃邊感受氛圍，KRW 8,000–12,000/人。<br>
+          <strong>選項B｜便利商店＋街邊小食</strong>：夜間宮殿前不要吃太撐，輕食解決，KRW 3,000–6,000/人。
+        </div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">19:00</div>
+      <div class="item-body">
+        <div class="item-type">交通</div>
+        <div class="item-title">出發景福宮夜間場</div>
+        <div class="item-transport">🚇 地鐵約 15 分鐘｜建議提早到排隊</div>
+        <div class="item-desc">景福宮夜間場人氣高，提前15–20分鐘抵達較好。不穿韓服票價 KRW 3,000/人。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">19:30</div>
+      <div class="item-body">
+        <div class="item-type">限定體驗 ⭐</div>
+        <div class="item-title">景福宮夜間特別開放</div>
+        <div class="item-transport">— 景福宮宮內｜停留約 1.5–2 小時</div>
+        <div class="item-desc">5/13–6/14 限定！19:00–21:30。燈光投影在古建築上，宮殿倒映在慶會樓水面，與白天截然不同的夢幻氛圍。不穿韓服 KRW 3,000/人。這是5月首爾最值得排進行程的限定體驗之一。</div>
+        <div class="item-note">⚠ 週一、週二不開放。5/20（三）✅ 可入場。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">21:30</div>
+      <div class="item-body">
+        <div class="item-type">返回</div>
+        <div class="item-title">返回飯店</div>
+        <div class="item-transport">🚇 地鐵約 15 分鐘</div>
+        <div class="item-desc">今天是行程最豐富的一天，好好休息。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 3 -->
+<div class="day-panel" id="day-2">
+  <div class="day-header">
+    <div class="day-badge">Day 3｜5/21 四</div>
+    <div>
+      <div class="day-theme">🎢 Everland 主題樂園全日</div>
+      <div class="day-note">套票含接送，09:20 明洞站 1 號出口集合。回程時間待確認，樂天超市視回程時間調整。</div>
+    </div>
+  </div>
+  <div class="meal-strip">
+    <span class="meal-tag breakfast">早餐｜飯店附近（二選一）</span>
+    <span class="meal-tag lunch">午餐｜Everland 園內</span>
+    <span class="meal-tag dinner">晚餐｜回程後視時間安排</span>
+  </div>
+  <div class="timeline">
+    <div class="item meal">
+      <div class="item-time">08:00</div>
+      <div class="item-body">
+        <div class="item-type">早餐（二選一）</div>
+        <div class="item-title">出發前吃飽</div>
+        <div class="item-transport">🚶 飯店附近步行</div>
+        <div class="item-desc">
+          <strong>選項A｜Tom N Toms Coffee（市廳附近）</strong>：貝果＋吐司＋咖啡，坐著吃，步行5分，KRW 6,000–10,000/人。<br>
+          <strong>選項B｜Tous Les Jours 多樂之日（明洞站前）</strong>：現烤麵包香，品項豐富，步行10分，KRW 5,000–9,000/人。
+        </div>
+        <div class="item-note">⚠ 09:00 前必須吃完出門，往明洞站步行約 10 分鐘。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">09:20</div>
+      <div class="item-body">
+        <div class="item-type">集合</div>
+        <div class="item-title">明洞站 1 號出口集合上車</div>
+        <div class="item-transport">🚌 套票接送，直達 Everland</div>
+        <div class="item-desc">套票含去程接送，直達 Everland，省去自行搭地鐵至江南站再轉巴士的時間（原需約 80–90 分鐘）。確認集合地點，提前5分鐘到。</div>
+        <div class="item-note">⚠ 09:20 準時，不要遲到。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">10:30</div>
+      <div class="item-body">
+        <div class="item-type">主題樂園</div>
+        <div class="item-title">Everland 入場！</div>
+        <div class="item-transport">— 園內步行</div>
+        <div class="item-desc">韓國最大主題樂園，分為 Global Fair、American Adventure、Magic Land、European Adventure、Zoo-Topia 五大區域。</div>
+        <div class="item-note">💡 平日人少，T-Express 幾乎不用排太久。開園衝刺，下午節奏放慢。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">10:30</div>
+      <div class="item-body">
+        <div class="item-type">必玩設施</div>
+        <div class="item-title">T-Express 雲霄飛車（優先衝刺）</div>
+        <div class="item-transport">— 開園第一站｜等待約 20–30 分鐘（平日）</div>
+        <div class="item-desc">韓國最刺激的木造雲霄飛車，最大傾斜角77度，體驗極佳。開園後立刻去，下午排隊時間會拉長。青少年會愛死。</div>
+      </div>
+    </div>
+    <div class="item meal">
+      <div class="item-time">13:00</div>
+      <div class="item-body">
+        <div class="item-type">午餐</div>
+        <div class="item-title">園內用餐</div>
+        <div class="item-transport">— 園內餐廳｜約 1 小時</div>
+        <div class="item-desc">
+          <strong>選項A｜園內韓式定食餐廳</strong>：坐下來好好休息，套餐含小菜，KRW 12,000–18,000/人。<br>
+          <strong>選項B｜各區小吃站</strong>：漢堡、炸雞、飲料，邊逛邊吃不浪費玩樂時間，KRW 8,000–15,000/人。
+        </div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">14:00</div>
+      <div class="item-body">
+        <div class="item-type">必去區域</div>
+        <div class="item-title">Safari 野生動物園</div>
+        <div class="item-transport">— 搭乘 Safari 巴士｜約 30 分鐘</div>
+        <div class="item-desc">搭乘特殊巴士近距離觀賞老虎、獅子、熊等野生動物，是Everland最特別的體驗，全家都適合，不要跳過。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">19:00</div>
+      <div class="item-body">
+        <div class="item-type">限定表演</div>
+        <div class="item-title">夜間遊行</div>
+        <div class="item-transport">— 園內表演廣場</div>
+        <div class="item-desc">燈光與音樂的夜間遊行，平日也有，不要為了趕路而跳過。是一天玩下來最療癒的收尾。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">待確認</div>
+      <div class="item-body">
+        <div class="item-type">回程交通</div>
+        <div class="item-title">套票接送返回明洞站 1 號出口</div>
+        <div class="item-transport">🚌 套票含回程接送</div>
+        <div class="item-desc">送回明洞站 1 號出口，飯店步行約 10 分鐘。</div>
+        <div class="item-pending">⏳ 回程時間待確認 — 確認後可決定是否排入明洞樂天超市（步行12分，或直接去首爾站樂天）。若回程在 21:00 前，建議改 Day 4 統一採購。</div>
+      </div>
+    </div>
+    <div class="item meal">
+      <div class="item-time">待確認</div>
+      <div class="item-body">
+        <div class="item-type">晚餐</div>
+        <div class="item-title">回程後覓食</div>
+        <div class="item-transport">🚶 明洞附近</div>
+        <div class="item-desc">
+          <strong>選項A｜bhc 炸雞（明洞附近）</strong>：香甜奶酪粉炸雞是招牌，韓國炸雞必吃，4人分食，KRW 20,000–28,000 整隻。<br>
+          <strong>選項B｜橋村炸雞（교촌치킨）</strong>：蜂蜜炸雞是必點，韓劇氛圍感滿分，KRW 18,000–25,000/份。
+        </div>
+        <div class="item-note">💡 Everland 玩一整天很累，晚餐選輕鬆吃的即可，不要再安排正式餐廳。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 4 -->
+<div class="day-panel" id="day-3">
+  <div class="day-header">
+    <div class="day-badge">Day 4｜5/22 五</div>
+    <div>
+      <div class="day-theme">🛍️ 弘大＋梨大＋南大門＋樂天超市＋Olive Young｜伴手禮大日</div>
+      <div class="day-note">今天集中採購，三大類全搞定，晚上回飯店有充裕時間整理行李</div>
+    </div>
+  </div>
+  <div class="meal-strip">
+    <span class="meal-tag breakfast">早餐｜明洞（二選一）</span>
+    <span class="meal-tag lunch">午餐｜弘大（三選一）</span>
+    <span class="meal-tag dinner">晚餐｜明洞（二選一）</span>
+  </div>
+  <div class="timeline">
+    <div class="item meal">
+      <div class="item-time">09:00</div>
+      <div class="item-body">
+        <div class="item-type">早餐（二選一）</div>
+        <div class="item-title">明洞早餐</div>
+        <div class="item-transport">🚶 步行 10 分鐘</div>
+        <div class="item-desc">
+          <strong>選項A｜죠스떡볶이 鯊魚辣炒年糕</strong>：早午餐套餐，辣炒年糕＋飯捲＋湯，韓式早餐感十足，青少年接受度高，KRW 8,000–12,000/人。<br>
+          <strong>選項B｜Isaac Toast Coffee（明洞）</strong>：鐵板吐司現煎，培根土豆披薩吐司是招牌，快速好吃，KRW 5,000–8,000/人。
+        </div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">10:00</div>
+      <div class="item-body">
+        <div class="item-type">交通</div>
+        <div class="item-title">前往梨大</div>
+        <div class="item-transport">🚇 2號線→梨大站｜約 20 分鐘</div>
+      </div>
+    </div>
+    <div class="item shopping">
+      <div class="item-time">10:30</div>
+      <div class="item-body">
+        <div class="item-type">購物</div>
+        <div class="item-title">梨大女性購物街</div>
+        <div class="item-transport">🚶 梨大站步行即達｜停留約 1 小時</div>
+        <div class="item-desc">平價韓系服飾聚集地，連鎖品牌和小型選品店混雜，價格比弘大和明洞更親民。青少年女生掃服飾、飾品的好時機。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">11:30</div>
+      <div class="item-body">
+        <div class="item-type">交通</div>
+        <div class="item-title">步行或地鐵前往弘大</div>
+        <div class="item-transport">🚶 步行 15 分鐘 or 🚇 地鐵 1 站</div>
+      </div>
+    </div>
+    <div class="item meal">
+      <div class="item-time">12:00</div>
+      <div class="item-body">
+        <div class="item-type">午餐（三選一）</div>
+        <div class="item-title">弘大商圈午餐</div>
+        <div class="item-transport">🚶 弘大站附近步行</div>
+        <div class="item-desc">
+          <strong>選項A｜솔솥 Solsot 釜飯</strong>：石鍋釜飯，鍋巴香脆，配菜豐富，四人各點一份剛剛好，KRW 13,000–18,000/人。<br>
+          <strong>選項B｜百年百歲土種蔘雞湯</strong>：連續三年米其林推薦，湯頭濃厚鮮甜，附大鮑魚，人蔘味不重，KRW 18,000–25,000/人。<br>
+          <strong>選項C｜豬腳小姐（미쓰족발 弘大）</strong>：在地30年，蒜泥豬腳Q彈不膩，附沙拉小菜刀削麵，份量十足，KRW 12,000–16,000/人。
+        </div>
+      </div>
+    </div>
+    <div class="item shopping">
+      <div class="item-time">13:30</div>
+      <div class="item-body">
+        <div class="item-type">逛街</div>
+        <div class="item-title">弘大街頭藝術區＋獨立小店</div>
+        <div class="item-transport">🚶 步行｜約 1.5 小時</div>
+        <div class="item-desc">首爾年輕文化核心，有街頭表演、獨立品牌服飾、文創小物、特色咖啡廳。SPAO、MIXXO、ADER ERROR 等韓國品牌在這裡都有店。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">15:00</div>
+      <div class="item-body">
+        <div class="item-type">交通</div>
+        <div class="item-title">返回市區</div>
+        <div class="item-transport">🚇 2號線→市廳/首爾站｜約 20 分鐘</div>
+      </div>
+    </div>
+    <div class="item shopping">
+      <div class="item-time">15:30</div>
+      <div class="item-body">
+        <div class="item-type">採購 ✅</div>
+        <div class="item-title">南大門市場｜食品伴手禮</div>
+        <div class="item-transport">🚶 飯店步行 15 分鐘｜停留約 1.5 小時</div>
+        <div class="item-desc">首爾最大傳統市場之一。目標品項：海苔（김）、辣醬（고추장）、各式泡麵、人蔘糖、韓國零食禮盒、醬料包。比明洞便宜、比機場齊全。</div>
+        <div class="item-note">💡 帶一個額外折疊購物袋，東西買了先收好。重的食品類今天買完，美妝等回到飯店後再整理。</div>
+      </div>
+    </div>
+    <div class="item shopping">
+      <div class="item-time">17:00</div>
+      <div class="item-body">
+        <div class="item-type">採購 ✅</div>
+        <div class="item-title">樂天超市 首爾站店</div>
+        <div class="item-transport">🚶 南大門步行 10 分鐘 or 🚇 1號線首爾站｜停留約 45 分鐘</div>
+        <div class="item-desc">首爾站地下樓層，推購物車採購最方便。韓國限定零食、大包裝泡麵、飲料、生活用品、辣炒年糕醬包都有。比南大門選項更多、比明洞便宜。</div>
+        <div class="item-note">💡 今天買完回飯店就能好好整理，不用留到最後一天匆促處理。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">18:00</div>
+      <div class="item-body">
+        <div class="item-type">返回飯店</div>
+        <div class="item-title">回飯店放戰利品＋稍作整理</div>
+        <div class="item-transport">🚇 首爾站→市廳站 1 站｜約 5 分鐘</div>
+        <div class="item-desc">把食品類全部放入行李，確認重量，騰出空間給明天的美妝採購。</div>
+      </div>
+    </div>
+    <div class="item meal">
+      <div class="item-time">18:30</div>
+      <div class="item-body">
+        <div class="item-type">晚餐（二選一）</div>
+        <div class="item-title">明洞晚餐</div>
+        <div class="item-transport">🚶 步行 10 分鐘</div>
+        <div class="item-desc">
+          <strong>選項A｜명동교자 明洞餃子</strong>：60年歷史排隊名店，刀切麵＋水餃，湯頭清鮮，每桌必上，KRW 10,000–14,000/人。<br>
+          <strong>選項B｜王妃家韓牛烤肉（왕비가）</strong>：明洞知名韓牛，有中文菜單店員幫代烤，油花漂亮，採購完犒勞自己，KRW 30,000–45,000/人。
+        </div>
+      </div>
+    </div>
+    <div class="item shopping">
+      <div class="item-time">20:00</div>
+      <div class="item-body">
+        <div class="item-type">採購 ✅</div>
+        <div class="item-title">Olive Young 明洞旗艦店｜美妝保養伴手禮</div>
+        <div class="item-transport">🚶 步行 3 分鐘｜停留約 1–1.5 小時</div>
+        <div class="item-desc">今天正式認真掃。建議出發前列好清單：面膜（Mediheal、Dr.Jart+）、精華液（Torriden、Abib）、氣墊粉底、防曬（ISNTREE、Beauty of Joseon）。有清單效率最高。</div>
+        <div class="item-note">💡 Olive Young 有自己的 App，可提前查價。消費滿額可享免稅，記得備好護照。</div>
+      </div>
+    </div>
+    <div class="item free">
+      <div class="item-time">21:30</div>
+      <div class="item-body">
+        <div class="item-type">返回</div>
+        <div class="item-title">返回飯店整理行李</div>
+        <div class="item-transport">🚶 步行 10 分鐘</div>
+        <div class="item-desc">今晚把所有伴手禮整理完畢放好，之後幾天輕裝上陣，不再背重物。✅</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 5 -->
+<div class="day-panel" id="day-4">
+  <div class="day-header">
+    <div class="day-badge">Day 5｜5/23 六</div>
+    <div>
+      <div class="day-theme">🌹 聖水洞咖啡廳＋中浪川玫瑰慶典＋新沙洞江南</div>
+      <div class="day-note">首爾最潮文青新興區域＋5月限定玫瑰季節活動，全程順路不繞路</div>
+    </div>
+  </div>
+  <div class="meal-strip">
+    <span class="meal-tag breakfast">早餐｜南大門市場（二選一）</span>
+    <span class="meal-tag lunch">午餐｜聖水洞（二選一）</span>
+    <span class="meal-tag dinner">晚餐｜新沙洞（三選一）</span>
+  </div>
+  <div class="timeline">
+    <div class="item meal">
+      <div class="item-time">08:00</div>
+      <div class="item-body">
+        <div class="item-type">早餐（二選一）</div>
+        <div class="item-title">南大門市場早市</div>
+        <div class="item-transport">🚶 步行 15 分鐘｜早上 7 點開始營業</div>
+        <div class="item-desc">
+          <strong>選項A｜칼국수 골목 蛤蜊刀切麵</strong>：湯頭清甜鮮美，小菜豐富，最在地的首爾早晨體驗，感受早市氛圍，KRW 9,000–12,000/人。<br>
+          <strong>選項B｜해장국 解酒湯</strong>：牛骨湯＋豆腐＋蔬菜，韓國阿姨叔叔的早晨靈魂食物，暖胃有元氣，在地感更強，KRW 10,000–13,000/人。
+        </div>
+        <div class="item-note">💡 早市氛圍非常在地，比觀光客景點更有真實首爾生活感。值得特別早起體驗一次。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">09:30</div>
+      <div class="item-body">
+        <div class="item-type">交通</div>
+        <div class="item-title">前往聖水洞</div>
+        <div class="item-transport">🚇 2號線→聖水站｜約 20 分鐘</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">10:00</div>
+      <div class="item-body">
+        <div class="item-type">文青體驗</div>
+        <div class="item-title">聖水洞咖啡廳巡禮</div>
+        <div class="item-transport">🚶 步行｜停留約 1.5 小時</div>
+        <div class="item-desc">首爾最夯新興文青區，廢棄工廠改建的咖啡廳密集。必訪：Cafe Onion 聖水店（廢墟工廠工業風，超有氣氛）、vetiver（黑芝麻維也納拿鐵）、Milky shop（焦糖黃油餅乾）。青少年拍照效果極佳。</div>
+        <div class="item-note">💡 聖水洞是首爾 IG 拍照密度最高的區域之一，多留時間慢慢拍。</div>
+      </div>
+    </div>
+    <div class="item meal">
+      <div class="item-time">11:30</div>
+      <div class="item-body">
+        <div class="item-type">午餐（二選一）</div>
+        <div class="item-title">聖水洞午餐</div>
+        <div class="item-transport">🚶 步行｜約 1 小時</div>
+        <div class="item-desc">
+          <strong>選項A｜소문난성수감자탕 馬鈴薯排骨湯</strong>：《白鐘元三大天王》推薦，豬排骨燉煮軟嫩，湯頭濃郁微辣，最後加炒飯完美，KRW 12,000–16,000/人。<br>
+          <strong>選項B｜조조칼국수 蛤蜊刀削麵</strong>：在地麵館，清爽鮮甜，咖啡廳吃太多甜食後清口首選，KRW 9,000–12,000/人。
+        </div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">13:30</div>
+      <div class="item-body">
+        <div class="item-type">交通</div>
+        <div class="item-title">前往中浪川玫瑰慶典</div>
+        <div class="item-transport">🚇 6號線→泰陵入口站｜約 30 分鐘</div>
+        <div class="item-desc">聖水站搭6號線直達泰陵入口站，出站步行可達中浪川沿岸。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">14:30</div>
+      <div class="item-body">
+        <div class="item-type">5月限定 ⭐</div>
+        <div class="item-title">中浪川玫瑰慶典</div>
+        <div class="item-transport">🚶 泰陵入口站步行可達｜停留約 1.5 小時</div>
+        <div class="item-desc">5月首爾限定，沿中浪川河道種植的超長玫瑰花道，入場完全免費。光線在下午4點後最美（逆光玫瑰牆效果絕佳）。建議穿白色或米色衣服拍起來最漂亮。晚上有燈光點亮也很美，但需視回程時間決定是否留到夜間。</div>
+        <div class="item-note">💡 週六人可能較多，建議提前到，避開下午高峰人潮。帶個輕薄外套，河邊可能有風。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">16:30</div>
+      <div class="item-body">
+        <div class="item-type">交通</div>
+        <div class="item-title">前往新沙洞</div>
+        <div class="item-transport">🚇 6號線→2號線→新沙站｜約 35 分鐘</div>
+        <div class="item-desc">泰陵入口→聖水轉2號線→江南方向→新沙站，一條線搞定。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">17:30</div>
+      <div class="item-body">
+        <div class="item-type">散步</div>
+        <div class="item-title">新沙洞林蔭道咖啡街</div>
+        <div class="item-transport">🚶 新沙站步行即達｜約 1 小時</div>
+        <div class="item-desc">兩排法國梧桐樹夾道的精品咖啡廳街，是首爾最有歐洲氛圍的街道。精品服飾、選品店、設計師品牌在這裡密集，傍晚光線打在樹葉上非常美，很適合慢慢走拍。</div>
+      </div>
+    </div>
+    <div class="item meal">
+      <div class="item-time">18:30</div>
+      <div class="item-body">
+        <div class="item-type">晚餐（三選一）</div>
+        <div class="item-title">新沙洞／延南洞晚餐</div>
+        <div class="item-transport">🚶 步行範圍</div>
+        <div class="item-desc">
+          <strong>選項A｜新沙洞韓牛烤肉</strong>：旅程最後一頓正式晚餐，新沙洞有多間高質感韓牛店，肉質與環境全程最高水準，KRW 30,000–50,000/人。<br>
+          <strong>選項B｜橋村炸雞（교촌치킨）新沙店</strong>：林蔭道附近分店，戶外座位夜晚氣氛很好，蜂蜜炸雞必點，KRW 18,000–25,000/人。<br>
+          <strong>選項C｜延南洞小館</strong>：弘大旁延南洞，FUHAHA 爆漿麵包當前菜，再找一間有氣氛的小餐館輕鬆收尾，KRW 12,000–20,000/人。
+        </div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">20:30</div>
+      <div class="item-body">
+        <div class="item-type">返回</div>
+        <div class="item-title">返回飯店</div>
+        <div class="item-transport">🚇 3號線新沙站→市廳站｜約 20 分鐘</div>
+        <div class="item-desc">今晚可以最後確認行李重量，明天輕鬆出發。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY 6 -->
+<div class="day-panel" id="day-5">
+  <div class="day-header">
+    <div class="day-badge">Day 6｜5/24 日</div>
+    <div>
+      <div class="day-theme">🎭 光化門換崗＋輕鬆收尾＋AREX 返台</div>
+      <div class="day-note">TW669 13:55 起飛，11:15 必須抵達仁川 T1（起飛前2.5小時）</div>
+    </div>
+  </div>
+  <div class="meal-strip">
+    <span class="meal-tag breakfast">早餐｜光化門附近（二選一）</span>
+    <span class="meal-tag lunch">不安排（機場候機）</span>
+    <span class="meal-tag dinner">— 返台後</span>
+  </div>
+  <div class="summary-bar">
+    <div class="s-item">✈ 起飛 <strong>13:55</strong></div>
+    <div class="s-item">⏰ 到機場最晚 <strong>11:25</strong>（起飛前2.5小時）</div>
+    <div class="s-item">🚄 AREX 搭車 <strong>10:30</strong> 首爾站出發</div>
+    <div class="s-item">🏨 Check-out <strong>09:30</strong> 前完成</div>
+  </div>
+  <div class="timeline">
+    <div class="item meal">
+      <div class="item-time">07:30</div>
+      <div class="item-body">
+        <div class="item-type">早餐（二選一）</div>
+        <div class="item-title">光化門附近悠閒早晨</div>
+        <div class="item-transport">🚶 步行 8–10 分鐘</div>
+        <div class="item-desc">
+          <strong>選項A｜Cafe Bora（광화문 附近）</strong>：招牌紫色抹茶拿鐵＋貝果，青少年超愛打卡，旅程最後一個早晨的美麗收尾，KRW 8,000–13,000/人。<br>
+          <strong>選項B｜德壽宮旁星巴克典藏門市</strong>：韓屋星巴克，步行8分，咖啡＋輕食，最後一張美照在石牆路旁拍，KRW 8,000–12,000/人。
+        </div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">08:30</div>
+      <div class="item-body">
+        <div class="item-type">景點</div>
+        <div class="item-title">光化門換崗儀式</div>
+        <div class="item-transport">🚶 步行 10 分鐘｜約 20–30 分鐘</div>
+        <div class="item-desc">朝鮮時代宮廷近衛軍守衛交接儀式，身著古裝的衛兵在光化門前整齊變換，比英國白金漢宮換崗規模更精緻，完全免費。每日上午10:00及下午14:00各一場。建議提前到卡好位置。</div>
+        <div class="item-note">💡 飯店步行就到，不排真的太可惜。是整趟旅程最後一個免費亮點。</div>
+      </div>
+    </div>
+    <div class="item free">
+      <div class="item-time">09:00</div>
+      <div class="item-body">
+        <div class="item-type">最後採購</div>
+        <div class="item-title">明洞最後補貨</div>
+        <div class="item-transport">🚶 步行 10 分鐘</div>
+        <div class="item-desc">Olive Young 或藥妝店最後確認是否有遺漏品項，快速掃貨。不要拖太久，09:30 前必須回飯店。</div>
+        <div class="item-note">⚠ 注意時間！09:30 必須回飯店完成 Check-out。</div>
+      </div>
+    </div>
+    <div class="item checkin">
+      <div class="item-time">09:30</div>
+      <div class="item-body">
+        <div class="item-type">退房</div>
+        <div class="item-title">Koreana Hotel Check-out</div>
+        <div class="item-transport">— 飯店大廳</div>
+        <div class="item-desc">確認所有行李齊全，貴重物品隨身。退房後帶著行李直接出發，不另外寄放。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">09:45</div>
+      <div class="item-body">
+        <div class="item-type">交通</div>
+        <div class="item-title">前往首爾站</div>
+        <div class="item-transport">🚇 地鐵 1 站（市廳→首爾站）｜約 5 分鐘 or 🚶 步行 15 分鐘</div>
+        <div class="item-desc">首爾站地下層即是 AREX 月台及樂天超市。</div>
+      </div>
+    </div>
+    <div class="item shopping">
+      <div class="item-time">10:00</div>
+      <div class="item-body">
+        <div class="item-type">最終補貨</div>
+        <div class="item-title">首爾站樂天超市（視需要）</div>
+        <div class="item-transport">— 首爾站地下層｜約 20–25 分鐘</div>
+        <div class="item-desc">Day 4 已在首爾站樂天掃過，今天視還有什麼漏買的快速補充。注意行李重量，不要超重。</div>
+        <div class="item-note">⚠ 10:25 最晚離開超市，前往 AREX 月台購票。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">10:30</div>
+      <div class="item-body">
+        <div class="item-type">交通 🚄</div>
+        <div class="item-title">AREX 直達車 → 仁川機場 T1</div>
+        <div class="item-transport">🚄 KRW 9,500/人｜全程 43 分鐘｜指定座位</div>
+        <div class="item-desc">首爾站→仁川 T1，不停靠中間站，全車指定座位，有行李放置區、免費 Wi-Fi、廁所。票務：現場購買或線上預購（Klook約75折），不能用 T-money 感應，需另行購票。出站用橘色閘口刷 QR 碼。</div>
+        <div class="item-note">⚠ 你們搭乘德威 TW669，請再次確認是 T1 航廈（非 T2）。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-time">11:13</div>
+      <div class="item-body">
+        <div class="item-type">抵達機場</div>
+        <div class="item-title">仁川機場 T1 抵達</div>
+        <div class="item-transport">— ✅ 起飛前 2小時42分抵達，時間充裕</div>
+        <div class="item-desc">辦理報到手續 → 託運行李 → 辦理退稅（Tax Refund）→ 出境審查 → 候機。退稅注意：需出示所有退稅收據＋護照，免稅金額退現或退卡均可。機場有韓國最後伴手禮可以買（限定品），但今天克制一下，別再買了。</div>
+        <div class="item-note">💡 出境後免稅店有韓國限定零食，可以留一點韓幣機動使用。</div>
+      </div>
+    </div>
+    <div class="item transport-only">
+      <div class="item-time">13:55</div>
+      <div class="item-body">
+        <div class="item-type">返台 ✈</div>
+        <div class="item-title">德威航空 TW669 起飛</div>
+        <div class="item-transport">✈ 首爾 ICN → 台中 RMQ｜約 2小時5分</div>
+        <div class="item-desc">預計 16:00 抵達台中清泉崗機場。首爾六日五夜圓滿結束！</div>
+      </div>
+    </div>
+  </div>
+  <div class="tip-box">
+    ✈ 回程交通選擇：AREX 直達車固定43分鐘不受塞車影響，4人合計 KRW 38,000，比 6701 巴士便宜且時間確定。備案：萬一趕不及，叫 Kakao T 大型計程車直達機場約 KRW 80,000–100,000，4人分攤也可接受。
+  </div>
+</div>
+
+<script>
+function showDay(index) {
+  document.querySelectorAll('.day-panel').forEach((p, i) => {
+    p.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', i === index);
+  });
+}
+</script>
+</body>
+</html>
